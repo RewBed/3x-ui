@@ -22,7 +22,27 @@ services:
       - ./cert:/root/cert
 
     labels:
+      - "traefik.enable=false"
+
+  panel-proxy:
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    depends_on:
+      - 3xui
+    networks:
+      - proxy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      PANEL_PORT: ${PANEL_PORT:-2053}
+      SUB_PORT: ${SUB_PORT:-2096}
+      NGINX_ENVSUBST_FILTER: "^(PANEL_PORT|SUB_PORT)$$"
+    volumes:
+      - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    labels:
       - "traefik.enable=true"
+      - "ingress.edge=true"
+      - "traefik.docker.network=proxy"
 
       # =====================================
       # Панель 3X-UI
@@ -36,19 +56,23 @@ services:
       - "traefik.http.routers.xui-panel.service=xui-panel"
       - "traefik.http.routers.xui-panel.priority=10"
 
-      # Внутренний HTTP-порт панели
-      - "traefik.http.services.xui-panel.loadbalancer.server.port=26847"
+      # Порт nginx; реальный порт панели задаётся через PANEL_PORT
+      - "traefik.http.services.xui-panel.loadbalancer.server.port=8080"
 
       # =====================================
       # Подписки для клиентов
       # Используют тот же DOMAIN из .env
       # =====================================
 
-      - "traefik.http.routers.xui-sub.rule=Host(`${DOMAIN:?Укажите DOMAIN в .env}`) && (PathPrefix(`/sub-rewbed-nat/`) || PathPrefix(`/mihomo/`))"
+      - "traefik.http.routers.xui-sub.rule=Host(`${DOMAIN:?Укажите DOMAIN в .env}`) && (PathPrefix(`${SUB_PATH:-/sub-rewbed-nat/}`) || PathPrefix(`/mihomo/`))"
       - "traefik.http.routers.xui-sub.entrypoints=websecure"
       - "traefik.http.routers.xui-sub.tls=true"
       - "traefik.http.routers.xui-sub.tls.certresolver=letsencrypt"
       - "traefik.http.routers.xui-sub.service=xui-sub"
       - "traefik.http.routers.xui-sub.priority=100"
 
-      - "traefik.http.services.xui-sub.loadbalancer.server.port=2096"
+      - "traefik.http.services.xui-sub.loadbalancer.server.port=8081"
+
+networks:
+  proxy:
+    external: true
