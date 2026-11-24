@@ -52,7 +52,7 @@ services:
       - "traefik.http.routers.xui-panel.rule=Host(`${DOMAIN:?Укажите DOMAIN в .env}`)"
       - "traefik.http.routers.xui-panel.entrypoints=websecure"
       - "traefik.http.routers.xui-panel.tls=true"
-      - "traefik.http.routers.xui-panel.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.xui-panel.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
       - "traefik.http.routers.xui-panel.service=xui-panel"
       - "traefik.http.routers.xui-panel.priority=10"
 
@@ -67,7 +67,7 @@ services:
       - "traefik.http.routers.xui-sub.rule=Host(`${DOMAIN:?Укажите DOMAIN в .env}`) && (PathPrefix(`${SUB_PATH:-/sub-rewbed-nat/}`) || PathPrefix(`/mihomo/`))"
       - "traefik.http.routers.xui-sub.entrypoints=websecure"
       - "traefik.http.routers.xui-sub.tls=true"
-      - "traefik.http.routers.xui-sub.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.xui-sub.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
       - "traefik.http.routers.xui-sub.service=xui-sub"
       - "traefik.http.routers.xui-sub.priority=100"
 
